@@ -80,10 +80,12 @@ class OSX
       return true if find? "~/Library/Safari/Extensions", name
 
     when :fxplug
+      return true if find? "~/Library/Plug-Ins/FxPlug", name
       return true if find? "/Library/Plug-Ins/FxPlug", name
 
     when :moef
       return true if find? "~/Movies/Motion Templates/Effects", name
+      return true if find? "/Movies/Motion Templates/Effects", name
 
     end
     false
