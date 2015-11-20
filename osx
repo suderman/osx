@@ -1,0 +1,153 @@
+#!/usr/bin/env ruby
+
+# 2015 Jon Suderman
+# https://github.com/suderman/osx/
+
+require 'rubygems'
+require 'optparse'
+require 'fileutils'
+include FileUtils
+
+# Check if an OS X package is installed
+class OSX
+
+  def initialize(name=false, system=false)
+    exit 1 unless installed? name, system
+  end
+
+  # Has this app been installed?
+  def installed?(name, system)
+    return false unless name
+
+    # First see if the name is a command
+    return true if command? name
+
+    # Otherwise, check for different app types
+    case name.split('.').last.downcase.to_sym
+
+    when :app
+      return true if find? "/Applications", name, true
+      return true if find? "~/Applications", name, true
+      return true if find? "~/Library/Application Support", name, true
+      return true if find? "/Library/Application Support", name, true
+      return true if find? "~/Library/Services", name, true
+      return true if find? "/Library/Services", name, true
+      if system
+        return true if find? "/System/Library/Services", name, true
+        return true if find? "/System/Library/CoreServices", name, true
+      end
+
+    when :framework
+      return true if find? "~/Library/Frameworks", name
+      return true if find? "/Library/Frameworks", name
+      if system
+        return true if find? "/System/Library/Frameworks", name
+      end
+
+    when :prefpane
+      return true if find? "~/Library/PreferencePanes", name
+      return true if find? "/Library/PreferencePanes", name
+      if system
+        return true if find? "/System/Library/PreferencePanes", name
+      end
+
+    when :service
+      return true if find? "~/Library/Services", name
+      return true if find? "/Library/Services", name
+      if system
+        return true if find? "/System/Library/Services", name
+      end
+
+    when :workflow
+      return true if find? "~/Library/Services", name
+      return true if find? "/Library/Services", name
+      if system
+        return true if find? "/System/Library/Services", name
+      end
+
+    when :plugin
+      return true if find? "~/Library/Internet Plug-Ins", name
+      return true if find? "/Library/Internet Plug-Ins", name
+
+    when :qlgenerator
+      return true if find? "~/Library/QuickLook", name
+      return true if find? "/Library/QuickLook", name
+      if system
+        return true if find? "/System/Library/QuickLook", name
+      end
+
+    when :safariextz
+      return true if find? "~/Library/Safari/Extensions", name
+
+    when :fxplug
+      return true if find? "/Library/Plug-Ins/FxPlug", name
+
+    when :moef
+      return true if find? "~/Movies/Motion Templates/Effects", name
+
+    end
+    false
+  end
+
+  # Does a command exist?
+  def command?(name, options={})
+    system "type #{name.gsub(/([^\w\d\.]+)/,'_')} &> /dev/null"
+  end
+
+  # Check if an app exists
+  def find?(path, name, spotlight=false)
+
+    # Ensure the path we're searching in exists
+    path = File.expand_path(path)
+    return false unless File.exist? path
+
+    # Look for the file without sudo
+    if spotlight
+      find_command = "mdfind -onlyin '#{path}' '(kMDItemFSName==\"#{name}\")'"
+    else
+      find_command = "find \"#{path}\" -iname \"#{name}\" 2>&1"
+    end
+    results = `#{find_command} | head -n 1`.chomp
+
+    # If that doesn't work, go full-sudo
+    if results.match(/permission denied/i)
+      results = `sudo #{find_command}`.chomp
+    end
+
+    true unless results.empty?
+  end
+
+
+  # Pretty colours
+  def yellow(text) "\033[33m#{text}\033[m" end
+  def blue(text)   "\033[34m#{text}\033[m" end
+  def gray(text)   "\033[37m#{text}\033[m" end
+
+end
+
+
+# Default values for options
+options = { :system => false, :help => false }
+
+# Option parser
+opt_parser = OptionParser.new do |opt|
+  opt.banner = "Usage: osx [OPTIONS] [FILENAME]"
+  opt.on("-s","--system","Also search /System/Library") { options[:system] = true }
+  opt.on("-h","--help","help") { options[:help] = true }
+end
+
+opt_parser.parse!
+
+
+# If there's an argument, let's do this:
+if ARGV[0]
+  name = ARGV.join(' ')
+  system = options[:system]
+  OSX.new name, system 
+
+# If there's no arguments, show the help
+else
+  options[:help] = true
+end
+
+puts opt_parser if options[:help]
