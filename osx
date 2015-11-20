@@ -91,7 +91,7 @@ class OSX
 
   # Does a command exist?
   def command?(name, options={})
-    system "type #{name.gsub(/([^\w\d\.]+)/,'_')} &> /dev/null"
+    system "type #{name.gsub(/([^\w\d\.\/]+)/,'_')} &> /dev/null"
   end
 
   # Check if an app exists
