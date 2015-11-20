@@ -84,8 +84,8 @@ class OSX
       return true if find? "/Library/Plug-Ins/FxPlug", name
 
     when :moef
-      return true if find? "~/Movies/Motion Templates.localized/Effects", name
-      return true if find? "/Movies/Motion Templates.localized/Effects", name
+      return true if find? "~/Movies/Motion Templates.localized", name
+      return true if find? "/Movies/Motion Templates.localized", name
 
     end
     false
